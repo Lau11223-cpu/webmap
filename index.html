@@ -1,0 +1,3239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <style>
+         body, html {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center; /* ✅ horizontally center .map-container */
+        align-items: center;      /* ✅ vertically center it */
+        height: 100vh;
+        }
+
+        .map-container {
+            position: relative;
+            width: 1440px;
+            height: 730px;
+            overflow: hidden;
+            box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
+        }
+       
+
+        #map {
+            width: 1440px;
+            height: 730px;
+            background-color: #04743c07;
+        }
+
+
+        /* Remove the arrow */
+            .leaflet-popup-tip-container {
+            display: none;
+            }
+
+        /* Custom popup box */
+            .custom-popup .leaflet-popup-content-wrapper {
+            background: #fff;
+            border: 2px solid #333;
+            border-radius: 0; /* square corners */
+            padding: 10px;
+            box-shadow: none;
+            }
+
+        /* Optional: triangle effect on top (fake arrow) */
+            .custom-popup .leaflet-popup-content-wrapper::before {
+            content: "";
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 10px solid #333;
+            }
+        
+        #screen-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            display: none;
+            background: rgb(252, 252, 252);
+            border: 2px solid #fffefe;
+            padding: 20px;
+            max-width: 20vw;
+            max-height: 50vh;
+            overflow-y: auto;
+            }
+
+        .popup-box {
+            background: #fff;
+            border: 2px solid #333;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            width: 300px;
+            text-align: center;
+            }
+
+        .truncate-text {
+            font-size: 15px;
+        font-family: Garamond;
+        margin-bottom: 4px;
+        color: #040d12;
+
+        display: -webkit-box;
+        -webkit-line-clamp: 5;
+        line-clamp:5;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+            }
+
+
+
+
+        #nationwide-tab {
+            position: absolute;
+            top: 300px;
+            right: 0;
+            background: #b31942;
+            color: #FFFFFF;
+            padding: 10px 6px;
+            writing-mode: vertical-rl;
+            text-align: center;
+            font-family: Garamond;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 6px 0 0 6px;
+            z-index: 1000;
+            }
+
+        #nationwide-panel {
+            position: absolute;
+            top: 0;
+            right: -1440px; /* hidden by default */
+            width: 1400px;
+            height: 100%;
+            background: #fdfdfd7c;
+            box-shadow: -2px 0 6px rgba(0,0,0,0.2);
+            padding: 20px;
+            overflow-y: auto;
+            transition: right 0.4s ease;
+            z-index: 999;
+            font-family: Garamond;
+            }
+
+        #nationwide-panel.open {
+            right: 0;
+            }
+
+        #close-panel {
+            background: none;
+            border: none;
+            font-size: 24px;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            cursor: pointer;
+            }
+
+        #nationwide-panel h2 {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 30px;
+            font-weight: bold;
+            color: #3a3a3a;
+            }
+
+        #nationwide-panel ul {
+            padding-left: 20px;
+            font-size: 16px;
+            color: #333;
+            }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Two columns */
+            gap: 20px;
+        }
+
+        .grid-item {
+            background: #a7adb152;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .panel-section {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+    </style>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+<div class="map-container">
+    <div id="map"></div>
+        
+    <div id="nationwide-tab" onclick="openNationwidePanel()">
+        <span>Nationwide<br>Projects</span>
+    </div>
+
+
+    <div id="nationwide-panel">
+        <button id="close-panel">×</button>
+        <h2>Nationwide Projects</h2>
+
+        <div class="grid-container">
+      
+            <div class="grid-item">
+        <h2 style="color: #3C3B6E; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Enhancing Behavioral Traffic Safety Efforts to Engage Underserved Communities</h2>
+                    
+        <p class="truncate-text" style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+          Horizon 54, in partnership with Fors Marsh, is conducting research on how State Highway Safety Offices (SHSOs) and other safety organizations can achieve effective engagement with underserved communities through equity informed communication methods and outreach efforts. 
+          As part of the research project, Horizon 54 will develop a noteworthy practices guide for SHSOs and other traffic safety organizations, as well as conduct a workshop with representatives of SHSOs and other highway safety organizations to present key research findings.
+        </p>
+                    
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Client:</strong> Transportation Research Board
+        </p>
+
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Prime:</strong> Fors Marsh
+        </p>
+            
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: -2px;">
+          <strong>Service:</strong> Research
+        </p>
+
+        <!--<div style="height:2px; background:#0a314679; margin-top: 4px; margin-bottom: 6px;"></div>
+        <img src="./images/JTTMap.png" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">
+
+        <div style="height:2px; background:#0a314679; margin:6px 0;"></div>-->
+
+        <div style="text-align: center; margin-top: -2px;">
+          <a href="https://equitablecities.com/project/enhancing-behavioral-traffic-safety-efforts-to-engage-underserved-communities/" target="_blank" 
+             style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #3C3B6E;
+                border-radius: 6px;
+                background-color: #3C3B6E;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+                More Info >
+            </a>
+        </div>
+            </div>
+                
+            <div class="grid-item">
+        <h2 style="color: #3C3B6E; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Clean Cities Coalition</h2>
+                    
+        <p class="truncate-text" style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+          Clean Cities coalitions strengthen the nation’s environment, energy security, and economic prosperity by working locally to advance affordable, efficient, 
+          and clean transportation fuels, energy efficient mobility systems, and other fuel-saving practices. 
+          Horizon 54 is partnering with the World Resources Institute to support community based organizations in the coalition to advance energy and environmental justice (EEJ) goals. 
+          Horizon 54 offers expertise in outreach, education and training to ensure that underserved and overburdened communities benefit from projects that improve air quality
+        </p>
+                    
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Client:</strong> U.S. Department of Energy
+        </p>
+
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Prime:</strong> World Resources Institute
+        </p>
+            
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 15px;">
+          <strong>Service:</strong> Outreach, Engagement, and Training
+        </p>
+
+        <!--<div style="height:2px; background:#0a314679; margin-top: 4px; margin-bottom: 6px;"></div>
+        <img src="./images/JTTMap.png" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">
+
+        <div style="height:2px; background:#0a314679; margin:6px 0;"></div>-->
+
+        <div style="text-align: center; margin-top: 15px;">
+          <a href="https://equitablecities.com/project/clean-cities-coalition/" target="_blank" 
+             style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #3C3B6E;
+                border-radius: 6px;
+                background-color: #3C3B6E;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+                More Info >
+            </a>
+        </div>          
+            </div>
+
+            <div class="grid-item">
+        <h2 style="color: #3C3B6E; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Analysis of Public Transportation Health Impacts and Benefits (TCRP J-11, Task 43) </h2>
+                    
+        <p class="truncate-text" style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+          While public transportation provides a variety of health benefits, public transportation agencies need better framing and more effective communication tools regarding these benefits to help residents make healthier travel choices. 
+          Horizon 54 partnered with Steer Davies and Gleave to develop an evidence-informed resource for public transportation agencies and their partners that focuses on the health benefits of public transportation.
+          The resource presents the best available research on the health benefits of public transportation; addresses equity considerations and barriers regarding the health benefits of public transportation; identifies improvements that public transportation agencies and their partners can implement to further increase health benefits and mitigate the adverse health effects of public transportation; identifies data, methods, and potential metrics that can be used to measure and track benefits; and finally, provides actionable communication tools for public transportation agencies and their partners. 
+        </p>
+                    
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Client:</strong> Transportation Research Board
+        </p>
+
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Prime:</strong> Steer Davies & Gleave Inc
+        </p>
+            
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 15px;">
+          <strong>Service:</strong> Research 
+        </p>
+
+        <!--<div style="height:2px; background:#0a314679; margin-top: 4px; margin-bottom: 6px;"></div>
+        <img src="./images/JTTMap.png" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">
+
+        <div style="height:2px; background:#0a314679; margin:6px 0;"></div>-->
+
+        <div style="text-align: center; margin-top: 15px;">
+          <a href="https://apps.trb.org/cmsfeed/TRBNetProjectDisplay.asp?ProjectID=5260" target="_blank" 
+             style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #3C3B6E;
+                border-radius: 6px;
+                background-color: #3C3B6E;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+                More Info >
+            </a>
+        </div>    
+            </div>
+
+            <div class="grid-item">
+        <h2 style="color: #3C3B6E; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Tools to Integrate Equity into Active Transportation and Safety Investments (NCHRP 08-150) </h2>
+                    
+        <p class="truncate-text" style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+          Sponsored by the Transportation Research Board, Horizon 54 is developing a tool to help state departments of transportation (DOTs) ensure that traditionally underserved communities benefit from safety investments and active transportation plans. 
+          This tool will be informed by research on how populations have been racialized by societal structures and institutions, and will incorporate methods to engage community members and other stakeholders in decision-making.
+          Finally, this research will evaluate how the effects of past decisions can inform future decisions to improve mobility outcomes. 
+        </p>
+
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Client:</strong> Transportation Research Board
+        </p>
+
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Prime:</strong> Metro Analytics 
+        </p>
+            
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 15px;">
+          <strong>Service:</strong> Research 
+        </p>
+
+        <!--<div style="height:2px; background:#0a314679; margin-top: 4px; margin-bottom: 6px;"></div>
+        <img src="./images/JTTMap.png" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">
+
+        <div style="height:2px; background:#0a314679; margin:6px 0;"></div>-->
+
+        <div style="text-align: center; margin-top: 15px;">
+          <a href="https://apps.trb.org/cmsfeed/TRBNetProjectDisplay.asp?ProjectID=5128" target="_blank" 
+             style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #3C3B6E;
+                border-radius: 6px;
+                background-color: #3C3B6E;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+                More Info >
+            </a>
+        </div>           
+            </div>
+                
+            <div class="grid-item">
+        <h2 style="color: #3C3B6E; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Assessing and Addressing Equity of Access to Essential Goods and Services (NCHRP 08-159) </h2>
+                    
+        <p class="truncate-text" style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+          Inequities by race and income were highlighted during the Covid-19 pandemic, particularly considering access to economic opportunities and essential services. 
+          State Department of Transportation (DOTs) officials seek to gain a stronger understanding of how accessibility differs by demographic groups, and improve equity in access.
+          Horizon 54 is developing a guide to help DOTs identify accessibility challenges in underserved populations, highlight methods to measure accessibility performance through an equity lens; 
+          provide direction on implementation; and suggest strategies for incorporating accessibility and equity into transportation planning.  
+        </p>
+
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Client:</strong> Transportation Research Board
+        </p>
+
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Prime:</strong> University of Texas 
+        </p>
+            
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 15px;">
+          <strong>Service:</strong> Research 
+        </p>
+
+        <!--<div style="height:2px; background:#0a314679; margin-top: 4px; margin-bottom: 6px;"></div>
+        <img src="./images/JTTMap.png" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">
+
+        <div style="height:2px; background:#0a314679; margin:6px 0;"></div>-->
+
+        <div style="text-align: center; margin-top: 15px;">
+          <a href="https://apps.trb.org/cmsfeed/TRBNetProjectDisplay.asp?ProjectID=5137" target="_blank" 
+             style="
+                display: inline-block;
+                margin-bottom: 10px;
+                padding: 6px 10px;
+                border: 2px solid #3C3B6E;
+                border-radius: 6px;
+                background-color: #3C3B6E;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+                More Info >
+            </a>
+        </div> 
+                    
+            </div>
+
+            <div class="grid-item">
+        <h2 style="color: #3C3B6E; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Institutionalizing the Safe System Approach in Transportation Planning and Programming (NCHRP 08-171) </h2>
+                    
+        <p class="truncate-text" style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+          The Safe System approach is part of an international effort to protect roadway users, and reduce roadway fatalities and serious injuries. 
+          Commitment and collective action by stakeholders such as planners, roadway system designers and managers, roadway users, law enforcement, and vehicle manufacturers, contributes to a positive safety culture. 
+          Horizon 54 and Fehr and Peers are developing a practical toolkit for State Departments of Transportation that highlights proven, innovative, and emerging strategies to institutionalize the Safe System approach throughout planning and programming processes.   
+        </p>
+
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Client:</strong> Transportation Research Board
+        </p>
+
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Prime:</strong>  Fehr and Peers  
+        </p>
+            
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 15px;">
+          <strong>Service:</strong> Focus groups, Toolkit, Research 
+        </p>
+
+        <!--<div style="height:2px; background:#0a314679; margin-top: 4px; margin-bottom: 6px;"></div>
+        <img src="./images/JTTMap.png" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">
+
+        <div style="height:2px; background:#0a314679; margin:6px 0;"></div>-->
+
+        <div style="text-align: center; margin-top: 15px;">
+          <a href="https://apps.trb.org/cmsfeed/TRBNetProjectDisplay.asp?ProjectID=5324" target="_blank" 
+             style="
+                display: inline-block;
+                margin-bottom: 10px;
+                padding: 6px 10px;
+                border: 2px solid #3C3B6E;
+                border-radius: 6px;
+                background-color: #3C3B6E;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+                More Info >
+            </a>
+        </div>              
+            </div>
+
+            <div class="grid-item">
+        <h2 style="color: #3C3B6E; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Traffic Safety Culture Research Roadmap (NCHRP 17-96) </h2>
+                    
+        <p class="truncate-text" style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+          With more states and localities adopting a vision of zero fatalities and serious injuries, increasingly greater attention is being given to communication, coordination, collaboration, leveraging resources, 
+          and applying a safe systems approach to traffic safety. 
+          This requires a culture shift– both among road users and traffic safety partner agencies, tied to education, engineering, enforcement, and emergency services. 
+          Horizon 54, in partnership with the University of North Carolina, Chapel Hill, produced a Traffic Safety Culture roadmap to indicate why improving traffic safety is critical, 
+          and to identify practices, tactics, techniques, and tools that can be implemented by safety partner agencies   
+        </p>
+
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Client:</strong> Transportation Research Board
+        </p>
+
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Prime:</strong>  University of North Carolina, Chapel Hill   
+        </p>
+            
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 40px;">
+          <strong>Service:</strong> Training, Research, Outreach and Engagement 
+        </p>
+
+        <!--<div style="height:2px; background:#0a314679; margin-top: 4px; margin-bottom: 6px;"></div>
+        <img src="./images/JTTMap.png" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">
+
+        <div style="height:2px; background:#0a314679; margin:6px 0;"></div>-->
+
+        <div style="text-align: center; margin-top: 40px;">
+          <a href="https://nap.nationalacademies.org/catalog/27488/traffic-safety-culture-research-roadmap" target="_blank" 
+             style="
+                display: inline-block;
+                margin-bottom: 10px;
+                padding: 6px 10px;
+                border: 2px solid #3C3B6E;
+                border-radius: 6px;
+                background-color: #3C3B6E;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+                More Info >
+            </a>
+        </div> 
+            </div>
+
+            <div class="grid-item">
+        <h2 style="color: #3C3B6E; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Lessons Learned from Covid-19: Public Transportation As a Community Lifeline (TCRP H-60)</h2>
+                    
+        <p class="truncate-text" style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+          Community lifelines, including energy, health and medical services, food, water, waste management, communications, and essential mobility, play a crucial role in coordinating crisis response and recovery. 
+          Without effective lifelines, community resilience suffers. 
+          Horizon 54 and WSP USA Inc. are investigating how low-income communities and communities of color experienced compounding disparities during the Covid-19 pandemic due to reduced mobility from transit service cuts and increased vulnerability to contracting the virus. 
+          The findings of this study aim to assist public transportation providers in understanding the impacts of modifying transit services during crises.    
+        </p>
+
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Client:</strong> Transportation Research Board
+        </p>
+
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Prime:</strong>  WSP USA Inc.   
+        </p>
+            
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 15px;">
+          <strong>Service:</strong> Research  
+        </p>
+
+        <!--<div style="height:2px; background:#0a314679; margin-top: 4px; margin-bottom: 6px;"></div>
+        <img src="./images/JTTMap.png" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">
+
+        <div style="height:2px; background:#0a314679; margin:6px 0;"></div>-->
+
+        <div style="text-align: center; margin-top: 15px;">
+          <a href="https://apps.trb.org/cmsfeed/TRBNetProjectDisplay.asp?ProjectID=5072" target="_blank" 
+             style="
+                display: inline-block;
+                margin-bottom: 10px;
+                padding: 6px 10px;
+                border: 2px solid #3C3B6E;
+                border-radius: 6px;
+                background-color: #3C3B6E;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+                More Info >
+            </a>
+        </div> 
+            </div>
+
+            <div class="grid-item">
+        <h2 style="color: #3C3B6E; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Strategies to Improve Pedestrian Safety at Night (NCHRP 17-97) </h2>
+                    
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+          Over the past decade, there has been a significant increase in nighttime pedestrian fatalities. Studies show that nighttime pedestrian collisions are particularly deadly, 
+          with an 83% chance of being fatal at intersections lacking street lighting, and a 54% chance at those with street lighting. 
+          Even when a collision is non-fatal, nighttime collisions often result in more severe injuries compared to daytime incidents. 
+          Horizon 54 and Toole Design Group are collaborating on a research project on the root causes of nighttime pedestrian crashes, 
+          and evaluating the effectiveness of current and emerging safety strategies.   
+          The research will explore economically viable solutions to reduce crashes, and will be used to develop guidance for their implementation. 
+          Findings will provide valuable support for transportation agencies in making data-driven decisions to enhance pedestrian safety. 
+          Insights will be presented in the form of a diverse range of strategies, 
+          allowing agencies to select from a menu of options tailored to their specific needs and circumstances.   
+        </p>
+
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Client:</strong> Transportation Research Board
+        </p>
+
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Prime:</strong>  Toole Design Group, LLC   
+        </p>
+            
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 80px;">
+          <strong>Service:</strong> Research  
+        </p>
+
+        <!--<div style="height:2px; background:#0a314679; margin-top: 4px; margin-bottom: 6px;"></div>
+        <img src="./images/JTTMap.png" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">
+
+        <div style="height:2px; background:#0a314679; margin:6px 0;"></div>-->
+
+        <div style="text-align: center; margin-top: 80px;">
+          <a href="https://apps.trb.org/cmsfeed/TRBNetProjectDisplay.asp?ProjectID=4973" target="_blank" 
+             style="
+                display: inline-block;
+                margin-bottom: 10px;
+                padding: 6px 10px;
+                border: 2px solid #3C3B6E;
+                border-radius: 6px;
+                background-color: #3C3B6E;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+                More Info >
+            </a>
+        </div> 
+            </div>
+
+            <div class="grid-item">
+        <h2 style="color: #3C3B6E; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Guide for Intersection Control Evaluation (NCHRP 17-98) </h2>
+                    
+        <p class="truncate-text" style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+          A variety of intersection control evaluation processes and metrics are used by highway agencies for evaluating safety, operational, multimodal, environmental, and right-of-way considerations,
+          in addition to cost impacts. 
+          However, there is no widely accepted procedure or guide for evaluating new intersections or modifications to an intersection. 
+          Horizon 54 and Kittelson & Associates developed a guide that incorporates rational processes, objective performance metrics, and appropriate tools to provide a consistent and objective intersection control evaluation.      
+        </p>
+
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Client:</strong> Transportation Research Board
+        </p>
+
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Prime:</strong>  Kittelson & Associates, Inc.   
+        </p>
+            
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 15px;">
+          <strong>Service:</strong> Research  
+        </p>
+
+        <!--<div style="height:2px; background:#0a314679; margin-top: 4px; margin-bottom: 6px;"></div>-->
+        <img src="./images/NCHRP 17-98-21.jpg" style="width:300px; display: block; margin-top: 10px; margin: 0 auto;">
+
+        <!--<div style="height:2px; background:#0a314679; margin:6px 0;"></div>-->
+
+        <div style="text-align: center; margin-top: 15px;">
+          <a href="https://www.trb.org/Publications/Blurbs/183162.aspx " target="_blank" 
+             style="
+                display: inline-block;
+                margin-bottom: 10px;
+                padding: 6px 10px;
+                border: 2px solid #3C3B6E;
+                border-radius: 6px;
+                background-color: #3C3B6E;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+                More Info >
+            </a>
+        </div> 
+            </div>
+
+            <div class="grid-item">
+        <h2 style="color: #3C3B6E; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">E-scooter Safety: Issues and Solutions (BTSCRP-10)</h2>
+                    
+        <p class="truncate-text" style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+          Sponsored by the Behavioral Traffic Safety Cooperative Research Program (BTSCRP), 
+          Horizon 54 in partnership with the University of North Carolina Highway Safety Research Center (UNC HSRC) conducted a study to advance multimodal road safety. 
+          The research explores emerging safety risks due to the growing use of e-scooters across the country, and developed evidence-based guidance, tools, policy options, 
+          and educational materials to mitigate those risks.
+          Through multiple methods of data collection and analysis, including a literature review, survey, 
+          interviews, and field sites this study offers insights into e-scooter current state of use, injury information, and existing safety management practices.       
+        </p>
+
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Client:</strong> Transportation Research Board
+        </p>
+
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Prime:</strong>  UNC Highway Safety Research Center (UNC HSRC)   
+        </p>
+            
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 15px;">
+          <strong>Service:</strong> Policy Analysis, Survey, and Research   
+        </p>
+
+        <!--<div style="height:2px; background:#0a314679; margin-top: 4px; margin-bottom: 6px;"></div>
+        <img src="./images/JTTMap.png" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">
+
+        <div style="height:2px; background:#0a314679; margin:6px 0;"></div>-->
+
+        <div style="text-align: center; margin-top: 15px;">
+          <a href="https://www.hsrc.unc.edu/our-work/btscrp-10-e-scooter-safety-issues-and-solutions/" target="_blank" 
+             style="
+                display: inline-block;
+                margin-bottom: 10px;
+                padding: 6px 10px;
+                border: 2px solid #3C3B6E;
+                border-radius: 6px;
+                background-color: #3C3B6E;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+                More Info >
+            </a>
+        </div> 
+            </div>
+
+            <div class="grid-item">
+        <h2 style="color: #3C3B6E; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Equity in Bicycle and Pedestrian Course Development </h2>
+                    
+        <p class="truncate-text" style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+          The Federal Highway Administration provides training courses to agencies designated as Pedestrian and Bicyclist Safety Focus States and Planning Organizations. 
+          Horizon 54 co-designed a course on community safety and mobility needs, including risk factors associated with pedestrian and bicyclist crashes, injuries and fatalities, 
+          factors that influence an individual’s perception of safety and wellbeing, and the range of obstacles to safe travel.
+          The course was co-facilitated by Equitable Cities as part of the Equity in Bicycle and Pedestrian Safety Trainings.        
+        </p>
+
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Client:</strong> Federal Highway Administration
+        </p>
+
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong></strong>   
+        </p>
+            
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 30px;">
+          <strong>Service:</strong> Course Development    
+        </p>
+
+        <!--<div style="height:2px; background:#0a314679; margin-top: 4px; margin-bottom: 6px;"></div>
+        <img src="./images/JTTMap.png" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">
+
+        <div style="height:2px; background:#0a314679; margin:6px 0;"></div>-->
+
+        <div style="text-align: center; margin-top: 30px;">
+          <a href="https://highways.dot.gov/safety/pedestrian-bicyclist/fas/trainings" target="_blank" 
+             style="
+                display: inline-block;
+                margin-bottom: 10px;
+                padding: 6px 10px;
+                border: 2px solid #3C3B6E;
+                border-radius: 6px;
+                background-color: #3C3B6E;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+                More Info >
+            </a>
+        </div> 
+            </div>
+
+            <div class="grid-item">
+        <h2 style="color: #3C3B6E; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">National Pedestrian and Bicycle Information Center</h2>
+                    
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+          As a national leader in pedestrian and bicycle research and resources, the Pedestrian and Bicycle Information Center (PBIC) develops and shares resources vital to advancing mobility, access, equity, and safety for pedestrians and bicyclists. 
+          Horizon 54 (formerly known as Equitable Cities) contributes technical assistance and thought leadership to the center as a member of their core team of partners. 
+          This involves developing, synthesizing, promoting and distributing accurate and current bicycling and walking information.        
+          PBIC is supported by the Federal Highway Administration (FHWA) and housed within the UNC Highway Safety Research Center in Chapel Hill, NC. 
+        </p>
+
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Client:</strong> Federal Highway Administration
+        </p>
+
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Prime:</strong>  University of North Carolina (UNC) Highway Safety Research Center
+        </p>
+            
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 100px;">
+          <strong>Service:</strong> Technical Assistance, Workshops, Outreach, and Engagement
+   
+        </p>
+
+        <!--<div style="height:2px; background:#0a314679; margin-top: 4px; margin-bottom: 6px;"></div>
+        <img src="./images/JTTMap.png" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">
+
+        <div style="height:2px; background:#0a314679; margin:6px 0;"></div>-->
+
+        <div style="text-align: center; margin-top: 100px;">
+          <a href="https://equitablecities.com/project/national-pedestrian-and-bicycle-information-center/" target="_blank" 
+             style="
+                display: inline-block;
+                margin-bottom: 10px;
+                padding: 6px 10px;
+                border: 2px solid #3C3B6E;
+                border-radius: 6px;
+                background-color: #3C3B6E;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+                More Info >
+            </a>
+        </div> 
+            </div>
+
+            <div class="grid-item">
+        <h2 style="color: #3C3B6E; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Clean Cities Energy and Environmental Justice Initiative</h2>
+                    
+        <p class="truncate-text" style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+          The National Renewable Energy Laboratory (NREL) is leading a pilot for selected Clean Cities Coalitions to engage in activities that transform communities and equitably grow the national impact of the U.S. Department of Energy’s efforts. 
+          Horizon 54 (formerly known as Equitable Cities) provides technical assistance, capacity building support, training, facilitation, templates, resources, and targeted outreach to educate NREL staff, subcontractors, and Clean Cities coalitions.         
+        </p>
+
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Client:</strong> National Renewable Energy Laboratory (NREL)
+        </p>
+
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+          <strong>Prime:</strong>  University of North Carolina (UNC) Highway Safety Research Center
+        </p>
+            
+        <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 10px;">
+          <strong>Service:</strong> Workshops , Technical Assistance, Capacity Building , Outreach, and Engagement
+   
+        </p>
+
+        <!--<div style="height:2px; background:#0a314679; margin-top: 4px; margin-bottom: 6px;"></div>-->
+        <img src="./images/CCEEJI.jpg" style="width:300px; display: block; margin-top: 10px; margin-bottom: 10px; margin: 0 auto;">
+
+        <!--<div style="height:2px; background:#0a314679; margin:6px 0;"></div>-->
+
+        <div style="text-align: center; margin-top: 10px;">
+          <a href="https://cleancities.energy.gov/coalitions/" target="_blank" 
+             style="
+                display: inline-block;
+                margin-bottom: 10px;
+                padding: 6px 10px;
+                border: 2px solid #3C3B6E;
+                border-radius: 6px;
+                background-color: #3C3B6E;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+                More Info >
+            </a>
+        </div> 
+            </div>
+      
+            <div style="height:2px; background:#0a314679; margin-top: 4px; margin-bottom: 20px;"></div>
+        </div>
+    </div>
+
+    <div id="filter-panel" style="
+      position: absolute; top: 420px; left: 0px; z-index: 1001;
+      background: rgba(255, 255, 255, 0); padding: 12px; border: 0px solid #ccc; border-radius: 20px;
+      font-family: Garamond; font-size: 14px;">
+      <strong style="font-size: 18px; font-weight: bold; margin-bottom: 6px; display: inline-block; line-height: 1.5;"> Project Filter Tool:</strong><br>
+
+      <label><input type="checkbox" id="toggle-all" checked> (Select All)</label><br>
+
+      <label><input type="checkbox" class="project-type" value="Outreach" checked onchange="toggleLayer(this)"> Outreach</label><br>
+      <label><input type="checkbox" class="project-type" value="Engagement" checked onchange="toggleLayer(this)"> Engagement</label><br>
+      <label><input type="checkbox" class="project-type" value="Focus_Group" checked onchange="toggleLayer(this)"> Focus Group</label><br>
+      <label><input type="checkbox" class="project-type" value="Planning" checked onchange="toggleLayer(this)"> Planning</label><br>
+      <label><input type="checkbox" class="project-type" value="Policy" checked onchange="toggleLayer(this)"> Policy</label><br>
+      <label><input type="checkbox" class="project-type" value="Research" checked onchange="toggleLayer(this)"> Research</label><br>
+      <label><input type="checkbox" class="project-type" value="Capacity_Building" checked onchange="toggleLayer(this)"> Capacity Building</label><br>
+      <label><input type="checkbox" class="project-type" value="Technical_Assistance" checked onchange="toggleLayer(this)"> Technical Assistance</label><br>
+      <label><input type="checkbox" class="project-type" value="Training" checked onchange="toggleLayer(this)"> Training</label><br>
+      <label><input type="checkbox" class="project-type" value="Workshop" checked onchange="toggleLayer(this)"> Workshop</label><br>
+      <label><input type="checkbox" class="project-type" value="Curriculum_Development" checked onchange="toggleLayer(this)"> Curriculum Development</label><br>
+      <label><input type="checkbox" class="project-type" value="Spatial_Analysis" checked onchange="toggleLayer(this)"> Spatial Analysis</label><br>  
+    </div>
+     
+
+
+
+</div>>
+
+  
+ <!-- Add this inside <body> -->
+<div id="screen-popup">
+  
+    <span onclick="closePopup()" style="position: absolute; top: 5px; right: 10px; 
+            cursor: pointer; font-size: 18px;">&times;</span>
+  
+        <!-- You can remove this if not needed -->
+    <div id="popup-title"></div>
+
+        <!-- Your content will be inserted here -->
+    <div id="popup-content"></div>
+</div>
+
+<style>
+  input[type="checkbox"]:checked {
+        accent-color: rgb(221, 212, 212);
+        }
+</style>
+
+
+    
+
+<script>
+        var map = L.map('map').setView([38.039464, -97.837104], 4.5);
+        //L.tileLayer('https://api.maptiler.com/maps/dataviz/{z}/{x}/{y}.png?key=0BhXweHNtJPj0aDDmUqp', {
+            //attribution: '<a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>',
+        //}).addTo(map);
+
+        //var marker = L.marker([38.8977, -77.0365]).addTo(map);
+
+// Get current center of view
+var center = map.getCenter();
+
+const markerRegistry = {};
+
+function addMultiLayerCircleMarker(lat, lng, layerTypes, options, markerName, popupHTML) {
+    markerRegistry[markerName] = [];  // store markers array for this project
+
+    layerTypes.forEach(type => {
+        const marker = L.circleMarker([lat, lng], options);
+
+        if (layersByType[type]) {
+            layersByType[type].addLayer(marker);
+        }
+
+        marker.on('click', function () {
+            document.getElementById('popup-title').innerText = '';
+            document.getElementById('popup-content').innerHTML = popupHTML;
+            document.getElementById('screen-popup').style.display = 'block';
+        });
+
+        // Save each marker separately
+        markerRegistry[markerName].push(marker);
+    });
+}
+
+const imageBounds = [
+  [58.5, -141.8], // top-left (NW)
+  [11, -50.2]  // bottom-right (SE)
+];
+
+const overlay = L.imageOverlay('CustomMap.png', imageBounds).addTo(map);
+
+function closePopup() {
+  document.getElementById('screen-popup').style.display = 'none';
+}
+
+
+function toggleLayer(checkbox) {
+    const layerType = checkbox.value;
+    if (checkbox.checked) {
+        map.addLayer(layersByType[layerType]);
+    } else {
+        map.removeLayer(layersByType[layerType]);
+    }
+}
+
+
+///Filter setting
+const layersByType = {
+    Engagement: L.layerGroup().addTo(map),
+    Outreach: L.layerGroup().addTo(map),
+    Focus_Group: L.layerGroup().addTo(map),
+    Research: L.layerGroup().addTo(map),
+    Policy: L.layerGroup().addTo(map),
+    Technical_Assistance: L.layerGroup().addTo(map),
+    Capacity_Building: L.layerGroup().addTo(map),
+    Planning: L.layerGroup().addTo(map),
+    Training: L.layerGroup().addTo(map),
+    Workshop: L.layerGroup().addTo(map),
+    Curriculum_Development: L.layerGroup().addTo(map),
+    Spatial_Analysis : L.layerGroup().addTo(map)
+
+};
+
+
+const popupContents = 
+{
+    project1_TCP_OrangeAndNewark: `
+    <h2 style="color: #5072A7; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Completed</h2>
+    <h2 style="color: #3a89bd; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Thriving Communities Case Study</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+      The Capacity Building team, led by Horizon 54, worked with the cities of Orange and East Orange to identify major goals to begin implementing community-prioritized short and medium-term initiatives mapped out in the 2017 Freeway Drive Study.
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> U.S. Department of Transportation
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Prime:</strong> Rocky Mountain Institute
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Policy, Research, Outreach and Engagement
+    </p>
+
+    <div style="height:2px; background:#a2b9bc; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <img src="./images/_DSC7650.JPG" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">
+
+    <h4 style="
+      text-align: center; 
+      color: #3d5a80; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Orange & East Orange, NJ
+    </h4>
+
+    <div style="height:2px; background:#a2b9bc; margin:6px 0;"></div>
+
+    <div style="text-align: center;">
+        <a href="http://learn.sharedusemobilitycenter.org/casestudy/usdot-thriving-communities-program-east-orange-orange-nj/" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #98c1d9;
+                border-radius: 6px;
+                background-color: #98c1d9;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>
+
+
+    <h2 style="color: #5072A7; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Completed</h2>
+    <h2 style="color: #3a89bd; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">CDC Technical Assistance</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        The project is part of the CDC's Racial and Ethnic Approaches to Community Health (REACH) and led by the Newark Beth Israel Medical Center. 
+        Based on the built area and physical activity around Branch Brook Park, Horizon 54 led the community engagement components of the project, 
+        conducted focus groups and walk audits in the area, 
+        and develop a final recommendation report.
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Newark Beth Israel Medical Center
+    </p>
+
+    <!--<p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Prime:</strong> Morgan State University and University of Delaware 
+    </p>-->
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Outreach, Engagement, Focus Group, and Research
+    </p>
+
+    <div style="height:2px; background:#a2b9bc; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <img src="./images/_DSC7441.JPG" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">
+
+    <h4 style="
+      text-align: center; 
+      color: #3d5a80; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Newark, NJ
+    </h4>
+
+    <div style="height:2px; background:#a2b9bc; margin:6px 0;"></div>
+
+    <!--<div style="text-align: center;">
+        <a href="https://equitablecities.com/project/social-justice-and-racial-equity-in-coachella-ca/" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #98c1d9;
+                border-radius: 6px;
+                background-color: #98c1d9;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>-->
+    </div>
+    `,
+
+    project2_TCP_Indiannapolis: `
+    <h2 style="color: #5072A7; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Completed</h2>
+    <h2 style="color: #3a89bd; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Thriving Communities Case Study</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+      Building upon the key initiatives identified by the Indianapolis team and the preliminary data collection, Horizon 54 focused its efforts on tactical urbanism engagement workshops, leveraging connections at site visits, and the tactical urbanism demonstration project on Sherman Drive.
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> U.S. Department of Transportation
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Prime:</strong> Rocky Mountain Institute
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Policy, Research, Outreach and Engagement
+    </p>
+
+    <div style="height:2px; background:#a2b9bc; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <img src="./images/_DSC7122.JPG" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">
+
+    <h4 style="
+      text-align: center; 
+      color: #3d5a80; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Indiannapolis, IN
+    </h4>
+
+    <div style="height:2px; background:#a2b9bc; margin:6px 0;"></div>
+
+    <div style="text-align: center;">
+        <a href="https://equitablecities.com/usdot-thriving-communities-program-indianapolis-indiana/" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #98c1d9;
+                border-radius: 6px;
+                background-color: #98c1d9;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>
+    `,
+
+    project3_TCP_AtlanticBeach: `
+    <h2 style="color: #5072A7; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Completed</h2>
+    <h2 style="color: #3a89bd; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Thriving Communities Case Study</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+      Building upon the key initiatives and recommended support efforts identified by Atlantic Beach leaders and the Capacity Builder team, the team focused its efforts on four major activities: community engagement and data collection, GIS mapping, a site visit, and support for pursuing funding opportunities.
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> U.S. Department of Transportation
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Prime:</strong> Rocky Mountain Institute
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Policy, Research, Outreach and Engagement
+    </p>
+
+    <div style="height:2px; background:#a2b9bc; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <img src="./images/DJI_0800.JPG" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">
+
+    <h4 style="
+      text-align: center; 
+      color: #3d5a80; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Atlantic Beach, SC
+    </h4>
+
+    <div style="height:2px; background:#a2b9bc; margin:6px 0;"></div>
+
+    <div style="text-align: center;">
+        <a href="https://learn.sharedusemobilitycenter.org/casestudy/usdot-thriving-communities-atlantic-beach-south-carolina/" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #98c1d9;
+                border-radius: 6px;
+                background-color: #98c1d9;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>
+    `,
+
+    project4_RWJF_Cleveland: `
+    <h2 style="color: #5072A7; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Completed</h2>
+    <h2 style="color: #3a89bd; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Community Connectors</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        April 28-29, the Horizon 54 team had the pleasure of visiting Cleveland, Tennessee as part of our work with the Robert Wood Johnson Foundation’s Community Connectors Program.
+        We’ve worked with the Cleveland Community Connectors team for two years and continue to be impressed by the groundbreaking collaboration between a White-led community development corporation and a Black-led neighborhood association. This multiracial coalition is the first of it’s kind in Cleveland’s history, and their approach reflects this spirit of innovation. By leading community-driven planning, hosting neighborhood events, and bringing residents and city leaders together to reimagine land use and connectivity, this team seeks to reconnect the historically black neighborhoods of College Hill and Old Blythefield to the rest of the city.
+        Residents and businesses in these neighborhoods were displaced and cut off from downtown Cleveland during urban renewal. Today, a busy railroad with recurring underpass flooding and blocked crossings continues to isolate this area of the city. The work to reconnect and revitalize these communities is both urgent and crucial for the wellbeing of Cleveland as a whole.
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Robert Wood Johnson Foundation
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Prime:</strong> Smart Growth America
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Technical assistance, Capacity building, Research, Outreach and Engagement 
+    </p>
+
+    <div style="height:2px; background:#a2b9bc; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <img src="./images/clevelandTN.jpg" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">
+
+    <h4 style="
+      text-align: center; 
+      color: #3d5a80; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Cleveland, TN
+    </h4>
+
+    <div style="height:2px; background:#a2b9bc; margin:6px 0;"></div>
+
+    <div style="text-align: center;">
+        <a href="https://equitablecities.com/community-connectors-cleveland-tn-trip/" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #98c1d9;
+                border-radius: 6px;
+                background-color: #98c1d9;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>
+    `,
+
+    project5_RWJF_Albany: `
+    <h2 style="color: #5072A7; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Completed</h2>
+    <h2 style="color: #3a89bd; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Community Connectors</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+       Insert project description here...
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Robert Wood Johnson Foundation
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Prime:</strong> Smart Growth America
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Technical assistance, Capacity building, Research, Outreach and Engagement 
+    </p>
+
+    <div style="height:2px; background:#a2b9bc; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <!--<img src="./images/" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">-->
+
+    <h4 style="
+      text-align: center; 
+      color: #3d5a80; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Albany, NY
+    </h4>
+
+    <div style="height:2px; background:#a2b9bc; margin:6px 0;"></div>
+
+    <div style="text-align: center;">
+        <a href="https://equitablecities.com/project/community-connectors-reconnecting-small-and-mid-sized-communities-harmed-by-divisive-infrastructure/" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #98c1d9;
+                border-radius: 6px;
+                background-color: #98c1d9;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>
+    `,
+
+    project6_RWJF_Buffalo: `
+    <h2 style="color: #5072A7; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Completed</h2>
+    <h2 style="color: #3a89bd; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Community Connectors</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+       As a Community Connectors Program Partner, Equitable Cities supported the Buffalo team through trust building workshops, 
+       capacity building on anti-displacement strategies, 
+       and grant writing training in order to sustain and amplify the work of the block clubs and BRT engagement. 
+       The New Urban Mobility Alliance (NUMO) was also able to provide land use analysis maps showing vacant lot activation opportunities on the Eastside, 
+       zoning maps highlighting single family and mixed use, 
+       homeownership rates, senior populations, mobility challenges, and air quality.
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Robert Wood Johnson Foundation
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Prime: </strong> Smart Growth America
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Technical assistance, Capacity building, Research, Outreach and Engagement 
+    </p>
+
+    <div style="height:2px; background:#a2b9bc; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <!--<img src="./images/" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">-->
+
+    <h4 style="
+      text-align: center; 
+      color: #3d5a80; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Buffalo, NY
+    </h4>
+
+    <div style="height:2px; background:#a2b9bc; margin:6px 0;"></div>
+
+    <div style="text-align: center;">
+        <a href="https://equitablecities.com/food-access-and-resilient-transportation-systems-after-tragedy/" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #98c1d9;
+                border-radius: 6px;
+                background-color: #98c1d9;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>
+    `,
+
+    project7_RWJF_Durham: `
+    <h2 style="color: #5072A7; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Completed</h2>
+    <h2 style="color: #3a89bd; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Community Connectors</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+       Insert project description here...
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Robert Wood Johnson Foundation
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Prime: </strong> Smart Growth America
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Technical assistance, Capacity building, Research, Outreach and Engagement 
+    </p>
+
+    <div style="height:2px; background:#a2b9bc; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <img src="./images/" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">
+
+    <h4 style="
+      text-align: center; 
+      color: #3d5a80; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Durham, NC
+    </h4>
+
+    <div style="height:2px; background:#a2b9bc; margin:6px 0;"></div>
+
+    <div style="text-align: center;">
+        <a href="https://equitablecities.com/project/community-connectors-reconnecting-small-and-mid-sized-communities-harmed-by-divisive-infrastructure/" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #98c1d9;
+                border-radius: 6px;
+                background-color: #98c1d9;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>
+    `,
+
+    project8_StLouis: `
+    <h2 style="color: #5072A7; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Completed</h2>
+    <h2 style="color: #3a89bd; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Safe Street For All St. Louis Bi-State Area</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+       Horizon 54 (formerly known as Equitable Cities), in partnership with CBB, 
+       worked with the East West Gateway Council of Governments in St. Louis to establish a Comprehensive Safety Action Plan (CSAP). 
+       The CSAP addresses the needs of the region overall, as well as for each county in the region to implement a Safe System Approach that would reduce fatal and serious injury accidents within the MPO. Equitable Cities will be contributing equity analysis and developing equity-based recommendations for this project. 
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> East-West Gateway Council of Goverment
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Prime:</strong> CBB Traffic
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Planning, Policy
+    </p>
+
+    <div style="height:2px; background:#a2b9bc; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <img src="./images/cbb.jpg" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">
+
+    <h4 style="
+      text-align: center; 
+      color: #3d5a80; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      St. Louis, MO
+    </h4>
+
+    <div style="height:2px; background:#a2b9bc; margin:6px 0;"></div>
+
+    <div style="text-align: center;">
+        <a href="https://www.ewgateway.org/wp-content/uploads/2024/06/Gateway-to-Safer-Roadways-June2024.pdf" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #98c1d9;
+                border-radius: 6px;
+                background-color: #98c1d9;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>
+    `,
+
+    project9_Delaware: `
+    <h2 style="color: #5072A7; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Completed</h2>
+    <h2 style="color: #3a89bd; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Crime Prevention Through Environmental Design Training</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+       Horizon 54 is working with the Delaware Valley Regional Planning Commission to facilitate a training on Crime Prevention Through Environmental Design (CPTED) principles. 
+       CPTED is an approach that focuses on proper design, use, and management of the built environment in order to reduce the incidence and fear of crime, while improving community vitality and overall quality of life. 
+       The theory is based on five principles: natural access control, natural surveillance, territoriality, activity support, and maintenance. 
+       The Horizon 54 team will be leading training and workshops, curriculum development, and facilitation on these concepts.
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Delaware Valley Regional Planning Commission
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong></strong> 
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Curriculum Development, Workshop, and Trainings
+    </p>
+
+    <div style="height:2px; background:#a2b9bc; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <img src="./images/_DSC3975.JPG" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">
+
+    <h4 style="
+      text-align: center; 
+      color: #3d5a80; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Philadelphia, PA
+    </h4>
+
+    <div style="height:2px; background:#a2b9bc; margin:6px 0;"></div>
+
+    <div style="text-align: center;">
+        <a href="https://equitablecities.com/project/crime-prevention-through-environmental-design-training/" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #98c1d9;
+                border-radius: 6px;
+                background-color: #98c1d9;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>
+    `,
+
+    project10_Coachella: `
+    <h2 style="color: #5072A7; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Completed</h2>
+    <h2 style="color: #3a89bd; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Special Committee on Equity & Social Justice and Racial Equity Early Action Plan</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        Horizon 54 is working with the City of Coachella, CA to establish a Special Committee on Equity and Social Justice, 
+        and develop a Racial Equity Early Action Plan. Horizon 54 team members are collaborating with a special committee consisting of city council members, non-profit and private sector representatives, 
+        and members of the public to review and approve racial equity definitions, provide recommendations and overall feedback on the establishment of the Racial Equity Framework and Action Plan, and guidance on community outreach and engagement efforts. 
+        The final Action Plan will include a key list of goals and strategies to advance racial equity through short-, medium-, and long-term policy, systems, and environmental changes within the city.
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> City of Coachella
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong></strong>
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Policy, Research, Outreach, and Engagement 
+    </p>
+
+    <div style="height:2px; background:#a2b9bc; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <img src="./images/CoachellaCA.jpg" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">
+
+    <h4 style="
+      text-align: center; 
+      color: #3d5a80; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      City of Coachella, CA
+    </h4>
+
+    <div style="height:2px; background:#a2b9bc; margin:6px 0;"></div>
+
+    <div style="text-align: center;">
+        <a href="https://equitablecities.com/project/social-justice-and-racial-equity-in-coachella-ca/" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #98c1d9;
+                border-radius: 6px;
+                background-color: #98c1d9;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>
+    `,
+
+    project11_Baltimore: `
+    <h2 style="color: #5072A7; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Completed</h2>
+    <h2 style="color: #3a89bd; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Baltimore Bike Share Equity Project </h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        Charles T. Brown, CEO of Horizon 54, conducted two focus groups with Baltimore City residents in 2017 as part of the Baltimore Bike Share Equity project with Morgan State University and the University of Delaware. 
+        The primary purpose of the focus groups was to understand factors preventing the use of Baltimore’s Bike Share System, as well as the types of strategies and incentives that might improve individual and overall use and awareness of the system for transportation and recreational purposes.
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Baltimore City Bike Share
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Prime:</strong> Morgan State University and University of Delaware 
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Planning, Policy, Research 
+    </p>
+
+    <div style="height:2px; background:#a2b9bc; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <!--<img src="./images/CoachellaCA.jpg" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">-->
+
+    <h4 style="
+      text-align: center; 
+      color: #3d5a80; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Maryland 
+    </h4>
+
+    <div style="height:2px; background:#a2b9bc; margin:6px 0;"></div>
+
+    <!--<div style="text-align: center;">
+        <a href="https://equitablecities.com/project/social-justice-and-racial-equity-in-coachella-ca/" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #98c1d9;
+                border-radius: 6px;
+                background-color: #98c1d9;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>-->
+    </div>
+    `,
+
+    project12_MWAQC: `
+    <h2 style="color: #5072A7; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Completed</h2>
+    <h2 style="color: #3a89bd; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">MWAQC Action Plan</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        Horizon 54, in partnership with AECOM, worked to support the development of an Environmental Justice Air Quality Action Plan and developed a stakeholder engagement plan. 
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Metropolitan Washington Air Quality Committee
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Prime:</strong> AECOM
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Research, Outreach, and Engagement
+    </p>
+
+    <div style="height:2px; background:#a2b9bc; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <!--<img src="./images/CoachellaCA.jpg" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">-->
+
+    <h4 style="
+      text-align: center; 
+      color: #3d5a80; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Metropolitan Washington Area
+    </h4>
+
+    <div style="height:2px; background:#a2b9bc; margin:6px 0;"></div>
+
+    <!--<div style="text-align: center;">
+        <a href="https://equitablecities.com/project/social-justice-and-racial-equity-in-coachella-ca/" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #98c1d9;
+                border-radius: 6px;
+                background-color: #98c1d9;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>-->
+    `,
+
+    project13_UTC: `
+    <h2 style="color: #5072A7; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Completed</h2>
+    <h2 style="color: #3a89bd; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Building Equitable Safe Streets for All: Data-Driven Approach and Computational Tools (UTC 06-001) </h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        This research project aims to address roadway safety in low-income and ethnically diverse communities in the United States by developing a data-driven approach and computational tools to assess equity in roadway safety. 
+        Horizon 54, in partnership with Texas A&M Transportation Institute (TTI), and Safety through Disruption University Transportation Center (Safe-D) at the Virginia Tech Transportation Institute, 
+        employed data from Houston, Texas, one of the most diverse cities in the United States. The final study included a road infrastructure inventory database by employing remote sensing and image processing techniques.  
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Transportation Research Board 
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Prime:</strong> Texas A&M Transportation Institute (TTI) 
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Spatial Analysis, Quantitative Research 
+    </p>
+
+    <div style="height:2px; background:#a2b9bc; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <!--<img src="./images/CoachellaCA.jpg" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">-->
+
+    <h4 style="
+      text-align: center; 
+      color: #3d5a80; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Houston, Texas 
+    </h4>
+
+    <div style="height:2px; background:#a2b9bc; margin:6px 0;"></div>
+
+    <div style="text-align: center;">
+        <a href="https://vtechworks.lib.vt.edu/items/79773d24-4dd9-4bc0-af4d-7598767e82ca" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #98c1d9;
+                border-radius: 6px;
+                background-color: #98c1d9;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>
+    `,
+
+    project14_TitleVI: `
+    <h2 style="color: #5072A7; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Completed</h2>
+    <h2 style="color: #3a89bd; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Title VI Training </h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        Title VI of the Civil Rights Act of 1964 prohibits discrimination on the basis of race, color, or national origin in any program receiving Federal financial assistance. 
+        As a condition of receiving Federal financial assistance, the New Jersey Department of Transportation is responsible for assuring nondiscrimination in its programs and activities, 
+        and must ensure nondiscrimination on the part of Metropolitan Planning Organizations, and county and municipal employees. 
+        Charles T. Brown, CEO and founder of Horizon 54, provides Title VI Training to NJDOT staff, 
+        highlighting environmental justice issues, and the disproportionately adverse human health and environmental effects federal-aid projects have had on minority and low-income populations.   
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> New Jersey Department of Transportation 
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Prime:</strong> Rutgers University 
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Workshop, Training 
+    </p>
+
+    <div style="height:2px; background:#a2b9bc; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <!--<img src="./images/CoachellaCA.jpg" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">-->
+
+    <h4 style="
+      text-align: center; 
+      color: #3d5a80; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      New Jersey 
+    </h4>
+
+    <div style="height:2px; background:#a2b9bc; margin:6px 0;"></div>
+
+    <div style="text-align: center;">
+        <a href="https://njdotlocalaidrc.com/events/event.php?s=2023-12-04-njltap-title-vi-training-webinar" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #98c1d9;
+                border-radius: 6px;
+                background-color: #98c1d9;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>
+    `,
+
+    project15_AAWSA: `
+    <h2 style="color: #5072A7; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Completed</h2>
+    <h2 style="color: #3a89bd; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">New Stewardship Models for an Equitable and Inclusive Chesapeake Bay Watershed </h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        Anne Arundel Watershed Stewards Academy (AAWSA) trains residents in Anne Arundel County, Maryland, to lead projects in their communities for a cleaner, healthier Chesapeake Bay. 
+        Horizon 54 supported AAWSA’s New Stewardship Models for an Equitable and Inclusive Chesapeake Bay Watershed, a project funded by the National Fish and Wildlife Foundation. 
+        The goal of this project is to increase program accessibility, and guarantee that resources for environmental restoration and greening projects are reaching underserved communities in the Northern and Western parts of the County.    
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Anne Arundel Watershed Steward Academy 
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong></strong>
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Focus groups, Outreach and Engagement 
+    </p>
+
+    <div style="height:2px; background:#a2b9bc; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <!--<img src="./images/CoachellaCA.jpg" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">-->
+
+    <h4 style="
+      text-align: center; 
+      color: #3d5a80; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Anne Arundel County, MD  
+    </h4>
+
+    <div style="height:2px; background:#a2b9bc; margin:6px 0;"></div>
+
+    <!--<div style="text-align: center;">
+        <a href="https://njdotlocalaidrc.com/events/event.php?s=2023-12-04-njltap-title-vi-training-webinar" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #98c1d9;
+                border-radius: 6px;
+                background-color: #98c1d9;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>-->
+    </div>
+    `,
+
+    project16_SCBicycleCrash: `
+    <h2 style="color: #5072A7; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Completed</h2>
+    <h2 style="color: #3a89bd; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">South Carolina Pedestrian and Bicycle Crash Analysis: 2009-2017 </h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        In summer 2018, Horizon 54 (formerly known as Equitable Cities) was commissioned by Palmetto Cycling Coalition to analyze bicycle and pedestrian crashes over a nine-year period (2009-2017) in the State of South Carolina. 
+        The report includes a comprehensive analysis of bicycle and pedestrian crash data over the time period, with data obtained from the Office of Highway Safety and Justice Programs (OHSJP) at the South Carolina Department of Public Safety.      
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Palmetto Cycling Coalition
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Funder:</strong> Robert Wood Johnson Foundation and American Heart Association 
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Planning, Policy, and Research 
+    </p>
+
+    <div style="height:2px; background:#a2b9bc; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <!--<img src="./images/CoachellaCA.jpg" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">-->
+
+    <h4 style="
+      text-align: center; 
+      color: #3d5a80; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      South Carolina   
+    </h4>
+
+    <div style="height:2px; background:#a2b9bc; margin:6px 0;"></div>
+
+    <!--<div style="text-align: center;">
+        <a href="https://njdotlocalaidrc.com/events/event.php?s=2023-12-04-njltap-title-vi-training-webinar" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #98c1d9;
+                border-radius: 6px;
+                background-color: #98c1d9;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>-->
+    </div>
+    `,
+
+    project17_Georgia: `
+    <h2 style="color: #5072A7; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Completed</h2>
+    <h2 style="color: #3a89bd; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Moving Georgia Forward: Complete Streets for All</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        In 2016, Georgia Bikes led a sixteen city Complete Streets campaign to support local communities and municipalities in their effort to implement Complete Streets policies and practices. 
+        Charles T. Brown, CEO of Horizon 54, co authored a report to document the state of Complete Streets policies in Georgia at the time, and to provide equity based recommendations on how to establish the fair and just implementation of such policies. 
+        Research and analysis was conducted on five priority cities: Athens, Columbus, Gainesville, Milledgeville, and Savannah.      
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Robert Wood Johnson Foundation and the American Heart Association
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Prime:</strong> Georgia Bikes  
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Planning, Policy, and Research
+    </p>
+
+    <div style="height:2px; background:#a2b9bc; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <!--<img src="./images/CoachellaCA.jpg" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">-->
+
+    <h4 style="
+      text-align: center; 
+      color: #3d5a80; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Georgia   
+    </h4>
+
+    <div style="height:2px; background:#a2b9bc; margin:6px 0;"></div>
+
+    <!--<div style="text-align: center;">
+        <a href="https://njdotlocalaidrc.com/events/event.php?s=2023-12-04-njltap-title-vi-training-webinar" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #98c1d9;
+                border-radius: 6px;
+                background-color: #98c1d9;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>-->
+    </div>
+    `,
+
+    project18_Bloomfield: `
+    <h2 style="color: #5072A7; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Completed</h2>
+    <h2 style="color: #3a89bd; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Walking Audit Report, Bloomfield Township </h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        In 2017, the Bloomfield Township Department of Health and Human Services received a grant from the New Jersey Healthy Communities Network and Partners for Health Foundation to conduct a walkability audit on select streets in the township. 
+        Charles T. Brown, CEO of Horizon 54, served as a consultant to lead the walkability audit, with the overarching goal of increasing pedestrian safety and mobility throughout the township. 
+        The final report included crash and crime data analysis, 
+        as well as input from the Project Steering Committee and the community.      
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Bloomfield Township Department of Health and Human Services
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Prime:</strong> Partners for Health Foundation  
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Planning, Policy, and Research 
+    </p>
+
+    <div style="height:2px; background:#a2b9bc; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <!--<img src="./images/CoachellaCA.jpg" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">-->
+
+    <h4 style="
+      text-align: center; 
+      color: #3d5a80; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Bloomfield Township, NJ  
+    </h4>
+
+    <div style="height:2px; background:#a2b9bc; margin:6px 0;"></div>
+
+    <!--<div style="text-align: center;">
+        <a href="https://njdotlocalaidrc.com/events/event.php?s=2023-12-04-njltap-title-vi-training-webinar" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #98c1d9;
+                border-radius: 6px;
+                background-color: #98c1d9;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>-->
+    </div>
+    `,
+
+    project19_Montclair: `
+    <h2 style="color: #5072A7; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Completed</h2>
+    <h2 style="color: #3a89bd; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Pedestrian Safety Action Plan, Montclair Township	</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        Equitable Cities developed a Pedestrian Safety Action Plan for the Montclair Township Pedestrian Safety Committee (MPSC) in 2015. The report contains crash and police data analysis, 
+        and provides an overview of the data used to inform, educate, and guide the strategic direction of the Committee. The report also includes a list of engineering, education, 
+        and enforcement recommendations provided by the public. 
+        The Committee presented strategic elements and data from this report to the Montclair Township Council in February 2015.       
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Montclair Township Pedestrian Safety Committee 
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Prime:</strong> Partners for Health Foundation  
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Planning, Policy, and Research 
+    </p>
+
+    <div style="height:2px; background:#a2b9bc; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <!--<img src="./images/CoachellaCA.jpg" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">-->
+
+    <h4 style="
+      text-align: center; 
+      color: #3d5a80; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Montclair Township, NJ 
+    </h4>
+
+    <div style="height:2px; background:#a2b9bc; margin:6px 0;"></div>
+
+    <!--<div style="text-align: center;">
+        <a href="https://njdotlocalaidrc.com/events/event.php?s=2023-12-04-njltap-title-vi-training-webinar" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #98c1d9;
+                border-radius: 6px;
+                background-color: #98c1d9;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>-->
+    </div>
+    `,
+
+    project20_BATW: `
+    <h2 style="color: #EC5800; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Ongoing</h2>
+    <h2 style="color: #F08000; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Broadway All The Way Master Plan</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        In 2022 the City of Louisville received $5 million in federal grants through the RAISE (Rebuilding American Infrastructure with Sustainability and Equity) program. 
+        This funding will go towards planning and design work for the Broadway All the Way master plan that enhances safety, public transportation, 
+        pedestrian access, public spaces and socioeconomic conditions along a historic 10-mile roadway. 
+        As a partner on this project with Gresham Smith, Horizon 54 will be assisting the project through regional engagement, policy, and research.
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Louisville Metro Government
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Gresham Smith
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Policy, Research, Outreach, and Engagement 
+    </p>
+
+    <div style="height:2px; background:#F4BB44; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <img src="./images/LousivilleKY.jpg" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">
+
+    <h4 style="
+      text-align: center; 
+      color: #EC5800; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Louisville, KY
+    </h4>
+
+    <div style="height:2px; background:#F4BB44; margin:6px 0;"></div>
+
+    <div style="text-align: center;">
+        <a href="https://louisvilleky.gov/government/public-works/raise-broadway-louisville-ky" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #F4BB44;
+                border-radius: 6px;
+                background-color: #F4BB44;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>
+    `,
+
+    project21_GeorgiaCommute: `
+    <h2 style="color: #EC5800; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Ongoing</h2>
+    <h2 style="color: #F08000; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Georgia Commute Options Transportation Management Plan</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        Horizon 54, in partnership with CBB, is working with the East West Gateway Council of Governments in St. Louis to establish a Comprehensive Safety Action Plan (CSAP). 
+        The CSAP addresses the needs of the region overall, as well as for each county in the region to implement a Safe System Approach that would reduce fatal and serious injury accidents within the MPO. 
+        Horizon 54 will be contributing equity analysis and developing equity-based recommendations for this project.
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Atlanta Regional Commission
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Arcadis
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Planning, Outreach, and Engagement
+    </p>
+
+    <div style="height:2px; background:#F4BB44; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <img src="./images/Georgia.jpg" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">
+
+    <h4 style="
+      text-align: center; 
+      color: #EC5800; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Georgia
+    </h4>
+
+    <div style="height:2px; background:#F4BB44; margin:6px 0;"></div>
+
+    <div style="text-align: center;">
+        <a href="https://equitablecities.com/project/georgia-commute-options-transportation-management-plan/" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #F4BB44;
+                border-radius: 6px;
+                background-color: #F4BB44;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>
+    `,
+
+    project22_JTTC: `
+    <h2 style="color: #EC5800; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Ongoing</h2>
+    <h2 style="color: #F08000; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Johnson Trolley Trail Corridor Supplemental Engagement</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        Horizon54 is working with Buckhurst Fish & Jacquemart. Inc to support community engagement effors for the proposed extension of the Johnson Trolley Trail. 
+        Leading the street-level engagement component of the trail's supplemental engagement study, Horizon 54 is designing and implementing community engagement activities that ensure local voices shape the trail's development. 
+        This include preparing outreach strategies, conducting trail interceopt, analyzing feedback, 
+        and helping to ensure that trail planning reflects the needs and priorities of nearby residents and stakeholders.
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> David Sandahl
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> BFJ Planning
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Outreach and Engagement
+    </p>
+
+    <div style="height:2px; background:#F4BB44; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <img src="./images/JTTMap.png" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">
+
+    <h4 style="
+      text-align: center; 
+      color: #EC5800; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Trenton, Lawrence, Ewing, and Princeton, NJ
+    </h4>
+
+    <div style="height:2px; background:#F4BB44; margin:6px 0;"></div>
+
+    <div style="text-align: center;">
+        <a href="https://www.mercercounty.org/departments/planning/johnson-trolley-trail" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #F4BB44;
+                border-radius: 6px;
+                background-color: #F4BB44;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>
+    `,
+
+    project23_RCI1on1Caltrans: `
+    <h2 style="color: #EC5800; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Ongoing</h2>
+    <h2 style="color: #F08000; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">RCI One on One Technical Assistance</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        Horizon 54 is providing Technical Assistance support and adjacent tasks for communities at all RCI cohorts, 
+        by working through a specific challenge or questions with Caltrans District 4 through virtual consultations, 
+        written feedback, and review of materials. 
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Reconnecting Comunities Institute
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> CADMUS
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Technical assistance
+    </p>
+
+    <div style="height:2px; background:#F4BB44; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <!--<img src="./images/" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">-->
+
+    <h4 style="
+      text-align: center; 
+      color: #EC5800; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Caltrans District 4, CA
+    </h4>
+
+    <div style="height:2px; background:#F4BB44; margin:6px 0;"></div>
+
+    <!-- <div style="text-align: center;">
+        <a href="https://www.mercercounty.org/departments/planning/johnson-trolley-trail" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #F4BB44;
+                border-radius: 6px;
+                background-color: #F4BB44;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>-->
+    `,
+
+    project24_RCI1on1Stockton: `
+    <h2 style="color: #EC5800; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Ongoing</h2>
+    <h2 style="color: #F08000; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">RCI One on One Technical Assistance</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        Horizon 54 is providing Technical Assistance support and adjacent tasks for communities at all RCI cohorts, 
+        by working through a specific challenge or questions with Little Manila Rising through virtual consultations, 
+        written feedback, and review of materials. 
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Reconnecting Comunities Institute
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> CADMUS
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Technical assistance
+    </p>
+
+    <div style="height:2px; background:#F4BB44; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <!--<img src="./images/JTTMap.png" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">-->
+
+    <h4 style="
+      text-align: center; 
+      color: #EC5800; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Stockton, CA
+    </h4>
+
+    <div style="height:2px; background:#F4BB44; margin:6px 0;"></div>
+
+    <!--<div style="text-align: center;">
+        <a href="https://www.mercercounty.org/departments/planning/johnson-trolley-trail" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #F4BB44;
+                border-radius: 6px;
+                background-color: #F4BB44;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>-->
+    `,
+
+    project25_RCI1on1SLC: `
+    <h2 style="color: #EC5800; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Ongoing</h2>
+    <h2 style="color: #F08000; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">RCI One on One Technical Assistance</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        Horizon 54 is providing Technical Assistance support and adjacent tasks for communities at all RCI cohorts, 
+        by working through a specific challenge or questions with Salt Lake City through virtual consultations, 
+        written feedback, and review of materials. 
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Reconnecting Comunities Institute
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> CADMUS
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Technical assistance
+    </p>
+
+    <div style="height:2px; background:#F4BB44; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <!--<img src="./images/JTTMap.png" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">-->
+
+    <h4 style="
+      text-align: center; 
+      color: #EC5800; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Salt Lake City, UT
+    </h4>
+
+    <div style="height:2px; background:#F4BB44; margin:6px 0;"></div>
+
+    <!--<div style="text-align: center;">
+        <a href="https://www.mercercounty.org/departments/planning/johnson-trolley-trail" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #F4BB44;
+                border-radius: 6px;
+                background-color: #F4BB44;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>-->
+    `,
+
+    project26_RCI1on1TwinCities: `
+    <h2 style="color: #EC5800; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Ongoing</h2>
+    <h2 style="color: #F08000; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">RCI One on One Technical Assistance</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        Horizon 54 is providing Technical Assistance support and adjacent tasks for communities at all RCI cohorts, 
+        by working through a specific challenge or questions with Twin Cities through virtual consultations, written feedback, 
+        and review of materials. 
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Reconnecting Comunities Institute
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> CADMUS
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Technical assistance
+    </p>
+
+    <div style="height:2px; background:#F4BB44; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <!--<img src="./images/JTTMap.png" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">-->
+
+    <h4 style="
+      text-align: center; 
+      color: #EC5800; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Minneapolis and Saint. Paul, MN
+    </h4>
+
+    <div style="height:2px; background:#F4BB44; margin:6px 0;"></div>
+
+    <!--<div style="text-align: center;">
+        <a href="https://www.mercercounty.org/departments/planning/johnson-trolley-trail" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #F4BB44;
+                border-radius: 6px;
+                background-color: #F4BB44;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>-->
+    `,
+
+    project27_RCI1on1Cleveland: `
+    <h2 style="color: #EC5800; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Ongoing</h2>
+    <h2 style="color: #F08000; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">RCI One on One Technical Assistance</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        Horizon 54 is providing Technical Assistance support and adjacent tasks for communities at all RCI cohorts, 
+        by working through a specific challenge or questions with Northeast Ohio Areawide Coordinating Agency (NOACA) through virtual consultations, 
+        written feedback, and review of materials. 
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Reconnecting Comunities Institute
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> CADMUS
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Technical assistance
+    </p>
+
+    <div style="height:2px; background:#F4BB44; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <!--<img src="./images/JTTMap.png" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">-->
+
+    <h4 style="
+      text-align: center; 
+      color: #EC5800; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Cleveland, OH
+    </h4>
+
+    <div style="height:2px; background:#F4BB44; margin:6px 0;"></div>
+
+    <!--<div style="text-align: center;">
+        <a href="https://www.mercercounty.org/departments/planning/johnson-trolley-trail" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #F4BB44;
+                border-radius: 6px;
+                background-color: #F4BB44;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>-->
+    `,
+
+    project28_HUDTCTASyrause: `
+    <h2 style="color: #EC5800; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Ongoing</h2>
+    <h2 style="color: #F08000; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">HUD's Thriving Communities and Technical Assistance (TCTA) Program</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        Horizon 54, as part of the Thriving Communities Network, is offering technical assistance to projects in Syracuse, NY. 
+        The focus is on enhancing community engagement through the Technical Community Transformation Assistance (TCTA) program, 
+        laying the groundwork for meaningful neighborhood transformation. 
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> U.S. Department of Housing and Urban Development
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Abt Global
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Technical assistance
+    </p>
+
+    <div style="height:2px; background:#F4BB44; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <!--<img src="./images/JTTMap.png" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">-->
+
+    <h4 style="
+      text-align: center; 
+      color: #EC5800; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Syracuse, NY
+    </h4>
+
+    <div style="height:2px; background:#F4BB44; margin:6px 0;"></div>
+
+    <div style="text-align: center;">
+        <a href="https://www.huduser.gov/portal/ota/thriving-communities-ta-program.html" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #F4BB44;
+                border-radius: 6px;
+                background-color: #F4BB44;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>
+    `,
+    
+    project29_HUDTCTARockford:`
+    <h2 style="color: #EC5800; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Ongoing</h2>
+    <h2 style="color: #F08000; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">HUD's Thriving Communities and Technical Assistance (TCTA) Program</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        Horizon 54, as part of the Thriving Communities Network, is offering technical assistance to projects in Rockford, IL. 
+        The City of Rockford is receiving Technical Community Transformation Assistance (TCTA) to create a shared vision for an actionable housing plan while deploying transportation investments. 
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> U.S. Department of Housing and Urban Development
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Abt Global
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Technical assistance
+    </p>
+
+    <div style="height:2px; background:#F4BB44; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <!--<img src="./images/JTTMap.png" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">-->
+
+    <h4 style="
+      text-align: center; 
+      color: #EC5800; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Rockford, IL
+    </h4>
+
+    <div style="height:2px; background:#F4BB44; margin:6px 0;"></div>
+
+    <div style="text-align: center;">
+        <a href="https://www.huduser.gov/portal/ota/thriving-communities-ta-program.html" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #F4BB44;
+                border-radius: 6px;
+                background-color: #F4BB44;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>
+    `,
+
+    project30_TCP2Dayton: `
+    <h2 style="color: #EC5800; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Ongoing</h2>
+    <h2 style="color: #F08000; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">USDOT Thriving Communities Program</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        The Miami Chapel and Edgemont neighborhoods, located in West Dayton, have faced significant historical inequities. 
+        Once thriving industrial hubs, both communities have experienced decades of disinvestment, economic decline, and population loss. 
+        Horizon 54 as the capacity building team, focuses on supporting the Community Partner Team and equip the City of Dayton with the tools, guidelines, training, 
+        and resources they need to better serve their communities.
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> U.S. Department of Transportation
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Abt Global
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Policy, Research, Outreach and Engagement
+    </p>
+
+    <div style="height:2px; background:#F4BB44; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <!--<img src="./images/JTTMap.png" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">-->
+
+    <h4 style="
+      text-align: center; 
+      color: #EC5800; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Dayton, OH
+    </h4>
+
+    <div style="height:2px; background:#F4BB44; margin:6px 0;"></div>
+
+    <!--<div style="text-align: center;">
+        <a href="https://www.huduser.gov/portal/ota/thriving-communities-ta-program.html" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #F4BB44;
+                border-radius: 6px;
+                background-color: #F4BB44;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>-->
+    `,
+
+    project31_TCP2SantaRosa: `
+    <h2 style="color: #EC5800; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Ongoing</h2>
+    <h2 style="color: #F08000; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">USDOT Thriving Communities Program</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        As a Thriving Communities Program capacity builder, Horizon 54 vision to support the Santa Rosa in fostering strong and enthusiastic community engagement, 
+        where residents will actively shape the planning process, and assist the city in improving multi-use trail connectivity and promoting equitable access for all. 
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> U.S. Department of Transportation
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Abt Global
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Policy, Research, Outreach and Engagement
+    </p>
+
+    <div style="height:2px; background:#F4BB44; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <img src="./images/SantaRosa.jpg" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">
+
+    <h4 style="
+      text-align: center; 
+      color: #EC5800; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Santa Rosa, CA
+    </h4>
+
+    <div style="height:2px; background:#F4BB44; margin:6px 0;"></div>
+
+    <!--<div style="text-align: center;">
+        <a href="https://www.huduser.gov/portal/ota/thriving-communities-ta-program.html" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #F4BB44;
+                border-radius: 6px;
+                background-color: #F4BB44;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>-->
+    `,
+
+    project32_CaltransI580: `
+    <h2 style="color: #EC5800; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Ongoing</h2>
+    <h2 style="color: #F08000; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">Caltrans I-580 Truck Access Study</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        Horizon 54 is working with Fehr & Peers in developing a I-580 Truck Access Study which aims to advance more equitable health outcomes for Oakland 
+        and San Leandro's flatland communities as well as Alameda County communities situated along the southern study area boundary. 
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> California Department of Transportation
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Fehr & Peers
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Research
+    </p>
+
+    <div style="height:2px; background:#F4BB44; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <!--<img src="./images/SantaRosa.jpg" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">-->
+
+    <h4 style="
+      text-align: center; 
+      color: #EC5800; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Oakland and San Leandro, CA
+    </h4>
+
+    <div style="height:2px; background:#F4BB44; margin:6px 0;"></div>
+
+    <div style="text-align: center;">
+        <a href="https://dot.ca.gov/caltrans-near-me/district-4/d4-projects/d4-580-truck-access-study#:~:text=The%20I%2D580%20truck%20ban,580%20Truck%20Access%20Study%20Map." target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #F4BB44;
+                border-radius: 6px;
+                background-color: #F4BB44;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>
+    `,
+
+    project33_Alameda2026: `
+    <h2 style="color: #EC5800; font-size: 14px; font-family: Garamond; margin-bottom: 6px;"> Ongoing</h2>
+    <h2 style="color: #F08000; font-size: 20px; font-family: Garamond; margin-top: 6px; margin-bottom: 6px;">2026 Alameda Countywide Transportation Plan Equity Framework</h2>
+    <p class="truncate-text"; style="color: #040d12; font-size: 15px; font-family: Garamond; margin-bottom: 4px;">
+        In December 2022 the Alameda County Transportation Commission published their Race and Equity Action Plan (REAP) which defines their commitment to advancing equity, and how equity will be interwoven throughout their work. 
+        Horizon 54, in partnership with Fehr and Peers, is working with the Commission to create an equity framework for the 2026 Countywide Transportation Plan that would specify channels for community input in project development, racial and equity analysis guidelines, 
+        equity in technical approach, and equity-informed planning and capital project work plans.  
+    </p>
+    
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Alameda County Transportation Commission 
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Client:</strong> Fehr & Peers
+    </p>
+
+    <p style="color: #040d12; font-size: 15px; font-family: Garamond; margin-top: 2px; margin-bottom: 2px;">
+      <strong>Service:</strong> Equity Framework Development, Planning and Policy, Technical Assistance, Outreach and Engagement
+    </p>
+
+    <div style="height:2px; background:#F4BB44; margin-top: 4px; margin-bottom: 6px;"></div>
+
+    <!--<img src="./images/SantaRosa.jpg" style="width:300px; display: block; margin-top: 6px; margin: 0 auto;">-->
+
+    <h4 style="
+      text-align: center; 
+      color: #EC5800; 
+      font-size: 15px; 
+      font-family: Garamond;
+      font-weight: bold;
+      margin-top: 6px;
+      margin-bottom: 6px;">
+      Alameda County, CA
+    </h4>
+
+    <div style="height:2px; background:#F4BB44; margin:6px 0;"></div>
+
+    <div style="text-align: center;">
+        <a href="https://www.alamedactc.org/planning/countywidetransportationplan" target="_blank" 
+            style="
+                display: inline-block;
+                padding: 6px 10px;
+                border: 2px solid #F4BB44;
+                border-radius: 6px;
+                background-color: #F4BB44;
+                color: #FFFFFF;
+                text-decoration: none;
+                font-weight: bold;
+                font-family: Garamond;">
+            More Info >
+        </a>
+    </div>
+    `,
+
+    project: `
+    `,
+
+}
+
+const projectData = [
+
+{    id: 'project1_TCP_OrangeAndNewark',
+    lat: 40.762268,
+    lng: -74.212035,
+    types: ['Policy', 'Engagement', 'Research', 'Outreach', 'Focus_Group'],
+    options: {
+      radius: 6,
+      color: "#3388ff",
+      fillColor: "#3388ff",
+      fillOpacity: 1
+    }
+},
+{    id: 'project2_TCP_Indiannapolis',
+    lat: 39.779668,
+    lng: -86.172587,
+    types: ['Policy', 'Engagement', 'Research', 'Outreach'],
+    options: {
+      radius: 6,
+      color: "#3388ff",
+      fillColor: "#3388ff",
+      fillOpacity: 1
+    }
+},
+{    id: 'project3_TCP_AtlanticBeach',
+    lat: 33.803342,
+    lng: -78.717530,
+    types: ['Policy', 'Engagement', 'Research', 'Outreach'],
+    options: {
+      radius: 6,
+      color: "#3388ff",
+      fillColor: "#3388ff",
+      fillOpacity: 1
+    }
+},
+{    id: 'project4_RWJF_Cleveland',
+    lat: 35.183147,
+    lng: -84.862016,
+    types: ['Engagement', 'Research', 'Technical_Assistance', 'Capacity_Building', 'Outreach'],
+    options: {
+      radius: 6,
+      color: "#3388ff",
+      fillColor: "#3388ff",
+      fillOpacity: 1
+    }
+},
+{    id: 'project5_RWJF_Albany',
+    lat: 42.655684,
+    lng: -73.751976,
+    types: ['Engagement', 'Research', 'Technical_Assistance', 'Capacity_Building', 'Outreach'],
+    options: {
+      radius: 6,
+      color: "#3388ff",
+      fillColor: "#3388ff",
+      fillOpacity: 1
+    }
+},
+{    id: 'project6_RWJF_Buffalo',
+    lat: 42.904006,
+    lng: -78.879895,
+    types: ['Engagement', 'Research', 'Technical_Assistance', 'Capacity_Building', 'Outreach'],
+    options: {
+      radius: 6,
+      color: "#3388ff",
+      fillColor: "#3388ff",
+      fillOpacity: 1
+    }
+},
+{    id: 'project7_RWJF_Durham',
+    lat: 35.966033,
+    lng: -78.909665,
+    types: ['Engagement', 'Research', 'Technical_Assistance', 'Capacity_Building', 'Outreach'],
+    options: {
+      radius: 6,
+      color: "#3388ff",
+      fillColor: "#3388ff",
+      fillOpacity: 1
+    }
+},
+{    id: 'project8_StLouis',
+    lat: 38.612806,
+    lng: -90.192817,
+    types: ['Policy', 'Planning'],
+    options: {
+      radius: 6,
+      color: "#3388ff",
+      fillColor: "#3388ff",
+      fillOpacity: 1
+    }
+},
+{    id: 'project9_Delaware',
+    lat: 39.983884,
+    lng: -75.146328,
+    types: ['Curriculum_Development', 'Workshop', 'Training'],
+    options: {
+      radius: 6,
+      color: "#3388ff",
+      fillColor: "#3388ff",
+      fillOpacity: 1
+    }
+},
+{    id: 'project10_Coachella',
+    lat: 33.676083,
+    lng: -116.177816,
+    types: ['Policy', 'Research', 'Outreach', 'Engagement'],
+    options: {
+      radius: 6,
+      color: "#3388ff",
+      fillColor: "#3388ff",
+      fillOpacity: 1
+    }
+},
+{    id: 'project11_Baltimore',
+    lat: 39.347121,
+    lng: -76.583753,
+    types: ['Policy', 'Research', 'Planning'],
+    options: {
+      radius: 6,
+      color: "#3388ff",
+      fillColor: "#3388ff",
+      fillOpacity: 1
+    }
+},
+{    id: 'project12_MWAQC',
+    lat: 39.040231,
+    lng: -76.700552,
+    types: ['Research', 'Outreach', 'Engagement'],
+    options: {
+      radius: 6,
+      color: "#3388ff",
+      fillColor: "#3388ff",
+      fillOpacity: 1
+    }
+},
+{    id: 'project13_UTC',
+    lat: 29.776105,
+    lng: -95.393958,
+    types: ['Spatial_Analysis', 'Research'],
+    options: {
+      radius: 6,
+      color: "#3388ff",
+      fillColor: "#3388ff",
+      fillOpacity: 1
+    }
+},
+{    id: 'project14_TitleVI',
+    lat: 40.288065,
+    lng: -74.450454,
+    types: ['Workshop', 'Training'],
+    options: {
+      radius: 6,
+      color: "#3388ff",
+      fillColor: "#3388ff",
+      fillOpacity: 1
+    }
+},
+{    id: 'project15_AAWSA',
+    lat: 38.991932,
+    lng: -76.552400,
+    types: ['Focus_Group', 'Outreach', 'Engagement'],
+    options: {
+      radius: 6,
+      color: "#3388ff",
+      fillColor: "#3388ff",
+      fillOpacity: 1
+    }
+},
+{    id: 'project16_SCBicycleCrash',
+    lat: 34.050494,
+    lng: -80.993440,
+    types: ['Planning', 'Policy', 'Research'],
+    options: {
+      radius: 6,
+      color: "#3388ff",
+      fillColor: "#3388ff",
+      fillOpacity: 1
+    }
+},
+{    id: 'project17_Georgia',
+    lat: 32.556080,
+    lng: -84.916547,
+    types: ['Planning', 'Policy', 'Research'],
+    options: {
+      radius: 6,
+      color: "#3388ff",
+      fillColor: "#3388ff",
+      fillOpacity: 1
+    }
+},
+{    id: 'project18_Bloomfield',
+    lat: 40.837621,
+    lng: -74.164429,
+    types: ['Planning', 'Policy', 'Research'],
+    options: {
+      radius: 6,
+      color: "#3388ff",
+      fillColor: "#3388ff",
+      fillOpacity: 1
+    }
+},
+{    id: 'project19_Montclair',
+    lat: 40.841677,
+    lng: -74.180869,
+    types: ['Planning', 'Policy', 'Research'],
+    options: {
+      radius: 6,
+      color: "#3388ff",
+      fillColor: "#3388ff",
+      fillOpacity: 1
+    }
+},
+{    id: 'project20_BATW',
+    lat: 38.236087,
+    lng: -85.744679,
+    types: ['Planning', 'Policy', 'Research', 'Engagement'],
+    options: {
+      radius: 6,
+      color: "#E49B0F",
+      fillColor: "#E49B0F",
+      fillOpacity: 1
+    }
+},
+{    id: 'project21_GeorgiaCommute',
+    lat: 33.763763,
+    lng: -84.417111,
+    types: ['Planning', 'Outreach', 'Engagement'],
+    options: {
+      radius: 6,
+      color: "#E49B0F",
+      fillColor: "#E49B0F",
+      fillOpacity: 1
+    }
+},
+{    id: 'project22_JTTC',
+    lat: 40.304789,
+    lng: -74.720622,
+    types: ['Outreach', 'Engagement'],
+    options: {
+      radius: 6,
+      color: "#E49B0F",
+      fillColor: "#E49B0F",
+      fillOpacity: 1
+    }
+},
+{    id: 'project23_RCI1on1Caltrans',
+    lat: 37.550943,
+    lng: -122.430514,
+    types: ['Technical_Assistance'],
+    options: {
+      radius: 6,
+      color: "#E49B0F",
+      fillColor: "#E49B0F",
+      fillOpacity: 1
+    }
+},
+{    id: 'project24_RCI1on1Stockton',
+    lat: 37.976201,
+    lng: -121.302358,
+    types: ['Technical_Assistance'],
+    options: {
+      radius: 6,
+      color: "#E49B0F",
+      fillColor: "#E49B0F",
+      fillOpacity: 1
+    }
+},
+{    id: 'project25_RCI1on1SLC',
+    lat: 40.754788,
+    lng: -111.873559,
+    types: ['Technical_Assistance'],
+    options: {
+      radius: 6,
+      color: "#E49B0F",
+      fillColor: "#E49B0F",
+      fillOpacity: 1
+    }
+},
+{    id: 'project26_RCI1on1TwinCities',
+    lat: 44.951075,
+    lng: -93.161251,
+    types: ['Technical_Assistance'],
+    options: {
+      radius: 6,
+      color: "#E49B0F",
+      fillColor: "#E49B0F",
+      fillOpacity: 1
+    }
+},
+{    id: 'project27_RCI1on1Cleveland',
+    lat: 41.475671,
+    lng: -81.691285,
+    types: ['Technical_Assistance'],
+    options: {
+      radius: 6,
+      color: "#E49B0F",
+      fillColor: "#E49B0F",
+      fillOpacity: 1
+    }
+},
+{    id: 'project28_HUDTCTASyrause',
+    lat: 43.053170,
+    lng: -76.142116,
+    types: ['Technical_Assistance'],
+    options: {
+      radius: 6,
+      color: "#E49B0F",
+      fillColor: "#E49B0F",
+      fillOpacity: 1
+    }
+},
+{    id: 'project29_HUDTCTARockford',
+    lat: 42.278007,
+    lng: -89.078711,
+    types: ['Technical_Assistance'],
+    options: {
+      radius: 6,
+      color: "#E49B0F",
+      fillColor: "#E49B0F",
+      fillOpacity: 1
+    }
+},
+{    id: 'project30_TCP2Dayton',
+    lat: 39.741025,
+    lng: -84.222083,
+    types: ['Policy', 'Research', 'Outreach', 'Engagement'],
+    options: {
+      radius: 6,
+      color: "#E49B0F",
+      fillColor: "#E49B0F",
+      fillOpacity: 1
+    }
+},
+{    id: 'project31_TCP2SantaRosa',
+    lat: 38.446038,
+    lng: -122.714687,
+    types: ['Policy', 'Research', 'Outreach', 'Engagement'],
+    options: {
+      radius: 6,
+      color: "#E49B0F",
+      fillColor: "#E49B0F",
+      fillOpacity: 1
+    }
+},
+{    id: 'project32_CaltransI580',
+    lat: 37.712312,
+    lng: -122.146450,
+    types: ['Research'],
+    options: {
+      radius: 6,
+      color: "#E49B0F",
+      fillColor: "#E49B0F",
+      fillOpacity: 1
+    }
+},
+{    id: 'project33_Alameda2026',
+    lat: 37.641795,
+    lng: -121.723373,
+    types: ['Research'],
+    options: {
+      radius: 6,
+      color: "#E49B0F",
+      fillColor: "#E49B0F",
+      fillOpacity: 1
+    }
+},
+
+];
+
+
+projectData.forEach(project => {
+  addMultiLayerCircleMarker(
+    project.lat,
+    project.lng,
+    project.types,
+    project.options,
+    project.id,
+    popupContents[project.id]  // 👈 this is how we insert the popup
+  );
+});
+   
+
+document.getElementById("nationwide-tab").addEventListener("click", function () {
+    document.getElementById("nationwide-panel").classList.add("open");
+    document.getElementById('filter-panel').style.display = 'none';
+    });
+
+document.getElementById("close-panel").addEventListener("click", function () {
+    document.getElementById("nationwide-panel").classList.remove("open");
+    document.getElementById('filter-panel').style.display = 'block';
+  });
+
+document.getElementById('toggle-all').addEventListener('change', function () {
+  const isChecked = this.checked;
+  const checkboxes = document.querySelectorAll('.project-type');
+
+  checkboxes.forEach(cb => {
+    cb.checked = isChecked;
+    toggleLayer(cb); // 👈 Update the map layer based on checkbox state
+  });
+});
+
+
+</script>
+ 
+</body>    
+
+</html>
